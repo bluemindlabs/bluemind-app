@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // USERS: a profile document per user.
+    // Anyone can read public profiles (for shareable profile pages + community stats).
+    // Only the owner can create/update their own profile.
+    match /users/{uid} {
+      allow read: if true;
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid);
+      allow delete: if false;
+    }
+
+    // CONTRIBUTIONS: trash reports.
+    // Public reports are world-readable (community map).
+    // Only the authenticated owner can create a report, and the userId must match.
+    // Owners may edit/delete their own reports. Stats fields are validated lightly.
+    match /contributions/{id} {
+      allow read: if resource.data.isPublic == true || isOwner(resource.data.userId);
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.keys().hasAll(['userId','imageUrl','lat','lng','createdAt']);
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+  }
+}
