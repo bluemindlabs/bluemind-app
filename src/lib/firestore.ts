@@ -183,24 +183,21 @@ export async function deleteContributionAndRollback(
   const contribRef = doc(db, "contributions", contributionId);
   const userRef = doc(db, "users", userId);
 
-  const contribSnap = await getDoc(contribRef);
-  if (!contribSnap.exists()) return;
-
-  const data = contribSnap.data();
-
   await runTransaction(db, async (tx) => {
     const userSnap = await tx.get(userRef);
+
     if (!userSnap.exists()) return;
 
-    const user = userSnap.data();
+    const user = userSnap.data() as {
+      totalUploads?: number;
+      ecoScore?: number;
+    };
 
     tx.delete(contribRef);
 
     tx.update(userRef, {
-      totalUploads: Math.max(0, (user.totalUploads || 0) - 1),
-
-      // simple ecoScore rollback (adjust if your logic differs)
-      ecoScore: Math.max(0, (user.ecoScore || 0) - 10),
+      totalUploads: Math.max(0, (user.totalUploads ?? 0) - 1),
+      ecoScore: Math.max(0, (user.ecoScore ?? 0) - 10),
     });
   });
 }

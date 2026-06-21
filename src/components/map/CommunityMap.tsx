@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/providers/AuthProvider";
-import { deleteContribution } from "@/lib/firestore";
+import { deleteContribution, deleteContributionAndRollback } from "@/lib/firestore";
 import { cleanText } from "@/lib/text";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
